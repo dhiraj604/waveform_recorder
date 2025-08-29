@@ -134,6 +134,39 @@ class WaveformRecorderController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Starts a new audio Stream recording session.
+  ///
+  /// Throws an exception if already recording.
+  Future<Stream<Uint8List>> startStreamRecording() async {
+    if (_audioRecorder != null) throw Exception('Already recording');
+    assert(_amplitudeStream == null);
+    assert(_startTime == null);
+    _file = null;
+    _length = Duration.zero;
+
+    // request permissions (needed for Android)
+    _audioRecorder = AudioRecorder();
+    await _audioRecorder!.hasPermission();
+
+    // start the recording into a temp file (or in memory on the web)
+    _startTime = DateTime.now();
+    _length = Duration.zero;
+    final stream = await _audioRecorder!.startStream(config);
+    _stopwatch.start();
+
+    // map the amplitude types as they stream in
+    _amplitudeStream = _audioRecorder!
+        .onAmplitudeChanged(interval)
+        .map(
+          (a) => waveform.Amplitude(current: a.current, max: a.max),
+        )
+        .asBroadcastStream(); // allows multiple listeners
+
+    notifyListeners();
+
+    return stream.asBroadcastStream();
+  }
+
   /// Stops the current audio recording session.
   ///
   /// Throws an exception if not currently recording.

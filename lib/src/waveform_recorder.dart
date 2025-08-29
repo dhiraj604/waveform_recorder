@@ -15,9 +15,10 @@ class WaveformRecorder extends StatefulWidget {
     required this.controller,
     this.onRecordingStarted,
     this.onRecordingStopped,
+    this.isShowTime = true,
     this.waveColor = const Color(0xFF000000), // Default to black
     this.durationTextStyle =
-        const TextStyle(color: Color(0xFF000000)), // Default to black
+    const TextStyle(color: Color(0xFF000000)), // Default to black
     super.key,
   });
 
@@ -38,6 +39,7 @@ class WaveformRecorder extends StatefulWidget {
 
   /// The text style for the duration text.
   final TextStyle durationTextStyle;
+  final bool isShowTime;
 
   @override
   State<WaveformRecorder> createState() => _WaveformRecorderState();
@@ -57,7 +59,7 @@ class _WaveformRecorderState extends State<WaveformRecorder> {
 
     _timer = Timer.periodic(
       const Duration(milliseconds: 250),
-      (_) => setState(() {}),
+          (_) => setState(() {}),
     );
   }
 
@@ -79,33 +81,32 @@ class _WaveformRecorderState extends State<WaveformRecorder> {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        height: widget.height,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _elapsedTime,
-                  style: widget.durationTextStyle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: AnimatedWaveList(
-                  stream: widget.controller.amplitudeStream,
-                  barBuilder: (animation, amplitude) => WaveFormBar(
-                    animation: animation,
-                    amplitude: amplitude,
-                    color: widget.waveColor,
-                  ),
-                ),
-              ),
-            ],
+    height: widget.height,
+    child: Row(
+      children: [
+        if (widget.isShowTime) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _elapsedTime,
+              style: widget.durationTextStyle,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: AnimatedWaveList(
+            stream: widget.controller.amplitudeStream,
+            barBuilder: (animation, amplitude) => WaveFormBar(
+              animation: animation,
+              amplitude: amplitude,
+              color: widget.waveColor,
+            ),
           ),
         ),
-      );
+      ],
+    ),
+  );
 
   String get _elapsedTime {
     final elapsed = widget.controller.timeElapsed;
